@@ -1,0 +1,341 @@
+﻿@page "/"
+@inject IDialogService _Dialog
+@inject ISnackbar Snackbar
+@layout MainLayout
+@inject IotEdgeConfigurationService configurationService
+<MudTabs PanelClass="pa-6">
+    <MudTabPanel Text="OPC Publisher - IOT Edge Device" Icon="@Icons.Material.Filled.Api"> 
+        <MudText Typo="Typo.h5">IotHub Direct Methods</MudText>
+        <MudGrid Justify="Justify.Center">
+            <MudItem xs="10">
+                <MudGrid Justify="Justify.Center">
+                    <MudItem xs="12">
+                        <MudGrid Justify="Justify.Center">
+                            <MudItem xs="6">
+                                <MudTextField @bind-Value="EndpointURL" Label="Server EndPoint" />
+                            </MudItem>
+                            <MudItem xs="3">
+                                <MudTextField @bind-Value="DeviceId" Label="Device Name" />
+                            </MudItem>
+                            <MudItem xs="3">
+                                <MudTextField @bind-Value="azurePayload.MachineName" Label="Machine Name" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudGrid Justify="Justify.Center">
+                            <MudItem xs="4">
+                                <MudTextField @bind-Value="azurePayload.InstallName" Label="Installation Name" />
+                            </MudItem>
+                            <MudItem xs="4">
+                                <MudTextField @bind-Value="azurePayload.PublicAPIKey" Label="Public API Key" />
+                            </MudItem>
+                            <MudItem xs="4">
+                                <MudTextField @bind-Value="azurePayload.CoreAPIKey" Label="Core API Key" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+            <MudItem Class="d-flex justify-center align-content-center" xs="2">
+                @if (!Connected)
+                {
+                    <MudButton OnClick="StartConnection" Class="my-12" Color="BtnColor" Variant="Variant.Filled">
+                        @BtnText
+                    </MudButton>
+                }
+                else
+                {
+                    <MudButton OnClick="CloseConnection" Class="my-12" Color="BtnColor" Variant="Variant.Filled">
+                        @BtnText
+                    </MudButton>
+                }
+
+            </MudItem>
+            @if (Connected)
+            {
+                <MudItem xs="3">
+                    <MudTreeView T="NodeTreeView" ServerData="LoadServerData" CanHover="true" Dense="true" Items="TreeItems">
+                        <ItemTemplate>
+                            <MudTreeViewItem Value="@context" OnDoubleClick="() => SelectNode(context)" Text="@($"{@context.BrowseName!.Name}({context.NodeId!.Identifier})" )" />
+                        </ItemTemplate>
+                    </MudTreeView>
+                </MudItem>
+                <MudItem xs="9">
+                    <MudTable Class="" Items="@nodes.OpcNodes">
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6">OPC Nodes</MudText>
+                            <MudTooltip Text="Add a Node">
+                                <MudIconButton OnClick="AddNode" Icon="@Icons.Material.Filled.Add" />
+                            </MudTooltip>
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>Id</MudTh>
+                            <MudTh>OpcSamplingInterval</MudTh>
+                            <MudTh>OpcPublishingInterval</MudTh>
+                            <MudTh>DisplayName</MudTh>
+                            <MudTh>HeartbeatInterval</MudTh>
+                            <MudTh>SkipFirst</MudTh>
+                            <MudTh>Remove Node</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Id</MudTd>
+                            <MudTd>@context.OpcSamplingInterval</MudTd>
+                            <MudTd>@context.OpcPublishingInterval</MudTd>
+                            <MudTd>@context.DisplayName</MudTd>
+                            <MudTd>@context.HeartbeatInterval</MudTd>
+                            <MudTd>@((bool)context.SkipFirst! ? "Yes" : "No")</MudTd>
+                                <MudTd>
+                                    @if (context.SkipFirst.HasValue)
+                                {
+                                    <MudButton Color="Color.Error" OnClick="() => RemoveNode(context)">
+                                        Remove Node
+                                    </MudButton>
+                                }
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudItem>
+            }
+
+        </MudGrid>
+    </MudTabPanel>
+    <MudTabPanel Text="Monnit - IOT Hub" Icon="@Icons.Material.Filled.Build">
+        <MudText Typo="Typo.h5">IotHub Direct Methods</MudText>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudGrid>
+                    <MudItem xs="2">
+                    </MudItem>
+                    <MudItem Class="d-flex justify-center align-content-center" xs="2">
+
+                    </MudItem>
+                    <MudItem Class="d-flex justify-center align-content-center" xs="2">
+
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+            <MudItem xs="12">
+                <MudTable Class="" Items="@Devices">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">Iot Hub Devices</MudText>
+                        
+                        <MudTextField Class="mx-4 my-auto" @bind-Value="deviceId" Label=" IOT Device Name" />
+                        <MudSpacer></MudSpacer>
+                        <MudButton OnClick="CreateDevice" Class="mx-2 my-auto" Color="BtnColor" Variant="Variant.Filled">
+                            Create IOT Device
+                        </MudButton>
+                        <MudButton OnClick="GetDevices" Class="mx-2 my-auto" Color="BtnColor" Variant="Variant.Filled">
+                            Get Devices
+                        </MudButton>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh>Id</MudTh>
+                        <MudTh>Primary Connection String</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.deviceId</MudTd>
+                        <MudTd>@($"MonnitHub.azure-devices.net;DeviceId={context.deviceId};SharedAccessKey={context.authentication.symmetricKey.primaryKey}")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudItem>
+        </MudGrid>
+    </MudTabPanel>
+</MudTabs>
+
+    @code {
+
+    private HashSet<NodeTreeView> TreeItems { get; set; } = new HashSet<NodeTreeView>();
+    private List<IotHubDevice> Devices { get; set; } = new List<IotHubDevice>();
+    public string MonnitHub { get; set; } = "MonnitHub.azure-devices.net";
+    public string DeviceId { get; set; } = "PiEdgeDevice";
+    public string ModuleId { get; set; } = "OPCPublisher";
+    public string EndpointURL { get; set; } = "opc.tcp://192.168.1.69:53530/OPCUA/SimulationServer";
+    public bool Connected { get; set; } = false;
+    public string BtnText { get; set; } = "Connect";
+    public Color BtnColor { get; set; } = Color.Primary;
+    private string? deviceId;
+    private string? result;
+    public AzurePayload azurePayload { get; set; } = new()
+        {
+            CoreAPIKey = "API-d4c74-bb538-34496-3a35a",
+            PublicAPIKey = "API-d4c74-bb538-34496-3a35a",
+            InstallName = "PiInstallv2",
+            MachineName = "PiMachinev2"
+        };
+    public Nodes nodes = new()
+        {
+            OpcNodes = new List<OpcNode>
+        {
+            new OpcNode
+            {
+                DisplayName = null,
+                HeartbeatInterval =null,
+                Id=null,
+                OpcPublishingInterval=null,
+                OpcSamplingInterval=null,
+                SkipFirst =null
+            }
+        }
+        };
+    private async Task CreateDevice()
+    {
+        try
+        {
+            result = await configurationService.CreateIoTDevice(deviceId!);
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add("Error Found: " + e.Message, Severity.Error, config => { config.ShowCloseIcon = true; });
+            throw;
+        }
+        await GetDevices();
+    }
+    private async Task GetAllNodes()
+    {
+        var Endpoint = new IotHubPayload
+            {
+                EndpointUrl = EndpointURL,
+                DataSetWriterGroup = azurePayload.MachineName,
+                DataSetWriterId = JsonConvert.SerializeObject(azurePayload)
+            };
+        nodes = await configurationService.GetConfiguredNodes(Endpoint);
+    }
+    private async Task GetDevices()
+    {
+        Devices = await configurationService.GetDevices();
+        StateHasChanged();
+    }
+    private async Task StartConnection()
+    {
+        TreeItems = await configurationService.Browse(EndpointURL);
+        try
+        {
+            Connected = true;
+            BtnColor = Color.Error;
+            BtnText = "Disconnect";
+            Snackbar.Add("Connected", Severity.Success, config => { config.ShowCloseIcon = true; });
+            await GetAllNodes();
+
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add("Error Found: " + e.Message, Severity.Error, config => { config.ShowCloseIcon = true; });
+            throw;
+        }
+    }
+    private void CloseConnection()
+    {
+        try
+        {
+            Connected = false;
+            BtnColor = Color.Success;
+            BtnText = "Connect";
+            nodes.OpcNodes.Clear();
+            Snackbar.Add("Disconnected", Severity.Success, config => { config.ShowCloseIcon = true; });
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add("Error Found: " + e.Message, Severity.Error, config => { config.ShowCloseIcon = true; });
+            throw;
+        }
+    }
+    private async Task RemoveNode(OpcNode opcNode)
+    {
+        var payload = new IotHubPayload
+            {
+                EndpointUrl = EndpointURL,
+                DataSetWriterId = JsonConvert.SerializeObject(azurePayload),
+                DataSetWriterGroup = azurePayload.MachineName
+            };
+        payload.OpcNodes.Add(opcNode);
+        try
+        {
+            await configurationService.RemoveNode(payload);
+            Snackbar.Add("Node Removed Succesfully", Severity.Success, config => { config.ShowCloseIcon = true; });
+            await GetAllNodes();
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add("Error Found: " + e.Message, Severity.Error, config => { config.ShowCloseIcon = true; });
+            throw;
+        }
+    }
+    private async Task AddNode()
+    {
+        var options = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                CloseButton = true,
+                Position = DialogPosition.Center,
+                DisableBackdropClick = true,
+                FullWidth = true,
+                MaxWidth = MaxWidth.ExtraSmall
+            };
+        DialogParameters parameters = new();
+        parameters.Add("EndpointURL", EndpointURL);
+        parameters.Add("ModuleId", ModuleId);
+        parameters.Add("DeviceId", DeviceId);
+        parameters.Add("dataSetWriterGroup", azurePayload.MachineName);
+        parameters.Add("dataSetWriterId", JsonConvert.SerializeObject(azurePayload));
+        var result = await _Dialog.Show<AddNodeModal>("Add a Node", parameters, options).Result;
+        if (!result.Canceled)
+        {
+            if ((bool)result.Data == true)
+            {
+                Snackbar.Add("Node Added Succesfully", Severity.Success, config =>
+               {
+                   config.ShowCloseIcon = true;
+               });
+                await GetAllNodes();
+                StateHasChanged();
+            }
+        }
+    }
+    public async Task<HashSet<NodeTreeView>> LoadServerData(NodeTreeView parentNode)
+    {
+        var Nodes = await configurationService.Browse(EndpointURL, parentNode);
+        foreach (NodeTreeView item in Nodes)
+        {
+            parentNode.children.Add(item);
+        }
+        return parentNode.children;
+    }
+    private async void SelectNode(NodeTreeView a)
+    {
+        var options = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                CloseButton = true,
+                Position = DialogPosition.Center,
+                DisableBackdropClick = true,
+                FullWidth = true,
+                MaxWidth = MaxWidth.ExtraSmall
+            };
+        DialogParameters parameters = new();
+        parameters.Add("EndpointURL", EndpointURL);
+        parameters.Add("ModuleId", ModuleId);
+        parameters.Add("DeviceId", DeviceId);
+        parameters.Add("dataSetWriterGroup", azurePayload.MachineName);
+        parameters.Add("_nodeId", a.NodeId!.Identifier);
+        parameters.Add("_nodeDisplayName", a.BrowseName!.Name);
+        parameters.Add("dataSetWriterId", JsonConvert.SerializeObject(azurePayload));
+        var result = await _Dialog.Show<AddNodeModal>("Add a Node", parameters, options).Result;
+        if (!result.Canceled)
+        {
+            if ((bool)result.Data == true)
+            {
+                Snackbar.Add("Node Added Succesfully", Severity.Success, config =>
+               {
+                   config.ShowCloseIcon = true;
+               });
+                await GetAllNodes();
+                StateHasChanged();
+            }
+        }
+    }
+}
+

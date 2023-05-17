@@ -1,0 +1,65 @@
+﻿@inject ISnackbar Snackbar
+@inject IotEdgeConfigurationService configurationService
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">          
+            Add a Node
+        </MudText>
+    </TitleContent>
+    <DialogContent>        
+            <MudTextField @bind-Value=Node.Id Label="Id" Required="true" RequiredError="Id is required!" />
+            <MudTextField @bind-Value=Node.DisplayName Label="Display Name" />
+            <MudText Typo="Typo.caption">Set a Dataset Field Id</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" Class="ml-auto">Add Node</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code
+{
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }    
+    public OpcNode Node { get; set; } = new();
+    [Parameter]
+    public string? EndpointURL { get; set; }
+    [Parameter]
+    public string? ModuleId { get; set; }
+    [Parameter]
+    public string? DeviceId { get; set; }
+    [Parameter]
+    public string? _nodeId { get; set; }
+    [Parameter]
+    public string? _nodeDisplayName { get; set; }
+    [Parameter]
+    public string? dataSetWriterId { get; set; }
+    [Parameter]
+    public string? dataSetWriterGroup { get; set; }
+    protected override void OnInitialized()
+    {
+        if (_nodeId is not null & _nodeDisplayName is not null)
+        {
+            Node.Id = _nodeId;
+            Node.DisplayName = _nodeDisplayName;
+        }
+    }
+    private async void Submit()
+    {
+        var payload = new IotHubPayload
+            {
+                EndpointUrl = EndpointURL!,
+                DataSetWriterId = dataSetWriterId,
+                DataSetWriterGroup = dataSetWriterGroup
+            };
+        payload.OpcNodes.Add(Node);
+        try
+        {
+            await configurationService.AddNode(payload);
+        }
+        catch (Exception e)
+        {
+            Snackbar.Add("Error Found: " + e.Message, Severity.Error, config => { config.ShowCloseIcon = true; });
+            throw;
+        }
+        MudDialog!.Close(DialogResult.Ok(true));
+    }
+}

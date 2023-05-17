@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IotEdgeConfigurationWASM", "IotEdgeConfigurationWASM.csproj", "{DBD9C99A-4C63-4967-90B3-B43392C0C02E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DBD9C99A-4C63-4967-90B3-B43392C0C02E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DBD9C99A-4C63-4967-90B3-B43392C0C02E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DBD9C99A-4C63-4967-90B3-B43392C0C02E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DBD9C99A-4C63-4967-90B3-B43392C0C02E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F1EE14BE-7C1F-48E2-8215-3C2A6F35F9F9}
+	EndGlobalSection
+EndGlobal
